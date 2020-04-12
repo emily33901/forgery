@@ -1,10 +1,10 @@
 package forgery
 
 import (
-	imguiBackend "github.com/emily33901/forgery-go/imgui"
-	"github.com/emily33901/forgery-go/render"
-	"github.com/emily33901/forgery-go/render/adapters"
-	"github.com/emily33901/forgery-go/render/scene"
+	imguiBackend "github.com/emily33901/forgery/imgui"
+	"github.com/emily33901/forgery/render"
+	"github.com/emily33901/forgery/render/adapters"
+	"github.com/emily33901/forgery/render/scene"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"

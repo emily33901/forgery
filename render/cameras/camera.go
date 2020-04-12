@@ -1,7 +1,7 @@
 package cameras
 
 import (
-	"github.com/emily33901/forgery-go/core"
+	"github.com/emily33901/forgery/core"
 	"github.com/g3n/engine/camera"
 )
 

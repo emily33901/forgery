@@ -1,9 +1,9 @@
 package scene
 
 import (
-	manager "github.com/emily33901/forgery-go/core"
-	"github.com/emily33901/forgery-go/render"
-	"github.com/emily33901/forgery-go/render/cameras"
+	manager "github.com/emily33901/forgery/core"
+	"github.com/emily33901/forgery/render"
+	"github.com/emily33901/forgery/render/cameras"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/gui"

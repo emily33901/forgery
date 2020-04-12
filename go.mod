@@ -1,4 +1,4 @@
-module github.com/emily33901/forgery-go
+module github.com/emily33901/forgery
 
 go 1.14
 

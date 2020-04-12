@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/emily33901/forgery-go/forgery"
+	"github.com/emily33901/forgery/forgery"
 )
 
 func main() {
