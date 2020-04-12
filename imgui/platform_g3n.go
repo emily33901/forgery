@@ -111,7 +111,11 @@ func (platform *GLFW) subscribeToEvents() {
 	onKeyPress := func(down bool, evname string, ev interface{}) {
 		e := ev.(*window.KeyEvent)
 
-		platform.imguiIO.KeyPress(int(e.Key))
+		if down {
+			platform.imguiIO.KeyPress(int(e.Key))
+		} else {
+			platform.imguiIO.KeyRelease(int(e.Key))
+		}
 
 		platform.imguiIO.KeyCtrl(int(glfw.KeyLeftControl), int(glfw.KeyRightControl))
 		platform.imguiIO.KeyShift(int(glfw.KeyLeftShift), int(glfw.KeyRightShift))
@@ -123,7 +127,7 @@ func (platform *GLFW) subscribeToEvents() {
 		onKeyPress(true, name, ev)
 	})
 	platform.window.Subscribe(window.OnKeyUp, func(name string, ev interface{}) {
-		onKeyPress(true, name, ev)
+		onKeyPress(false, name, ev)
 	})
 
 	platform.window.Subscribe(window.OnChar, func(evname string, ev interface{}) {
