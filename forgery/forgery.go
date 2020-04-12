@@ -32,8 +32,6 @@ type Forgery struct {
 
 	showDemoWindow bool
 
-	testWindow *scene.Window
-
 	Adapter render.Adapter
 }
 
@@ -76,41 +74,43 @@ func Get() *Forgery {
 		panic(err)
 	}
 
-	f.testWindow = scene.NewWindow("", f.Adapter)
-	f.testWindow.AttachCameraToScene()
+	return f
+}
+
+func (f *Forgery) NewSceneWindow() {
+	newWindow := scene.NewWindow("", f.Adapter)
 
 	// Create a blue torus and add it to the scene
 	geom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 	mat := material.NewStandard(math32.NewColor("DarkBlue"))
 	mesh := graphic.NewMesh(geom, mat)
-	f.testWindow.Scene.Add(mesh)
+	newWindow.Scene.Add(mesh)
 
 	// Create and add lights to the scene
-	f.testWindow.Scene.Add(light.NewAmbient(&math32.Color{1.0, 1.0, 1.0}, 0.8))
+	newWindow.Scene.Add(light.NewAmbient(&math32.Color{1.0, 1.0, 1.0}, 0.8))
 	pointLight := light.NewPoint(&math32.Color{1, 1, 1}, 5.0)
 	pointLight.SetPosition(1, 0, 2)
-	f.testWindow.Scene.Add(pointLight)
+	newWindow.Scene.Add(pointLight)
 
 	// Create and add an axis helper to the scene
-	f.testWindow.Scene.Add(helper.NewAxes(0.5))
+	newWindow.Scene.Add(helper.NewAxes(0.5))
 
-	f.testWindow.Camera().SetPosition(0, 0, 3)
-
-	f.window.Subscribe(window.OnWindowSize, func(evname string, ev interface{}) {
-		f := Get()
-
-		// Get framebuffer size and update viewport accordingly
-		width, height := f.window.GetSize()
-		// Update the camera's aspect ratio
-		f.testWindow.Camera().SetAspect(float32(width) / float32(height))
-	})
-
-	return f
+	newWindow.Camera().SetPosition(0, 0, 3)
 }
 
 func (f *Forgery) BuildUI() {
 	if f.showDemoWindow {
 		imgui.ShowDemoWindow(&f.showDemoWindow)
+	}
+
+	// Global forgery menu
+	if imgui.BeginMainMenuBar() {
+
+		if imgui.MenuItem("New scene") {
+			f.NewSceneWindow()
+		}
+
+		imgui.EndMainMenuBar()
 	}
 
 	scene.Iter(func(_ string, v *scene.Window) {

@@ -1,14 +1,16 @@
 package scene
 
 import (
+	"math"
+
 	manager "github.com/emily33901/forgery/core"
 	"github.com/emily33901/forgery/render"
 	"github.com/emily33901/forgery/render/cameras"
+	"github.com/inkyblackness/imgui-go"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/renderer"
-	"github.com/inkyblackness/imgui-go"
 )
 
 type Window struct {
@@ -16,6 +18,7 @@ type Window struct {
 	Scene    *core.Node
 	cameraId string
 	id       string
+	closing  bool
 
 	fb       *render.FrameBuffer
 	adapter  render.Adapter
@@ -49,6 +52,8 @@ func NewWindow(cameraId string, adapter render.Adapter) *Window {
 	w.Scene.Add(cameras.Get(cameraId))
 
 	w.id = windows.New(w)
+
+	w.AttachCameraToScene()
 
 	return w
 }
@@ -87,7 +92,8 @@ func (w *Window) AttachCameraToScene() {
 }
 
 func (w *Window) BuildUI() {
-	if imgui.Begin(w.id) {
+	imgui.SetNextWindowSizeConstraints(imgui.Vec2{100, 100}, imgui.Vec2{math.MaxFloat32, math.MaxFloat32})
+	if imgui.BeginV(w.id, &w.closing, 0) {
 		size := imgui.ContentRegionAvail()
 
 		if size != w.lastSize {
@@ -104,6 +110,6 @@ func (w *Window) BuildUI() {
 			0,
 			imgui.Vec4{X: 0, Y: 0, Z: 0, W: 1}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 
-		imgui.End()
 	}
+	imgui.End()
 }
