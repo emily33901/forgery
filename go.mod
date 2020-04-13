@@ -10,3 +10,5 @@ require (
 	golang.org/x/image v0.0.0-20200119044424-58c23975cae1 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
+
+replace github.com/inkyblackness/imgui-go => E:\src\gohack\github.com\inkyblackness\imgui-go

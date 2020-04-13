@@ -1,4 +1,4 @@
-package core
+package fcore
 
 import "fmt"
 
@@ -22,6 +22,10 @@ func (m *Manager) New(data interface{}) string {
 	m.data[newId] = data
 
 	return newId
+}
+
+func (m *Manager) Del(k string) {
+	delete(m.data, k)
 }
 
 func (m *Manager) Get(k string) interface{} {

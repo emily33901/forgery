@@ -12,16 +12,20 @@ import (
 type GLFW struct {
 	imguiIO imgui.IO
 
-	window window.IWindow
+	window   window.IWindow
+	keyState *window.KeyState
 
 	time             float64
+	DeltaTime        float32
 	mouseJustPressed [3]bool
+	mouseDisabled    bool
 }
 
 func NewPlatform(io imgui.IO) *GLFW {
 	platform := &GLFW{
-		imguiIO: io,
-		window:  window.Get(),
+		imguiIO:  io,
+		window:   window.Get(),
+		keyState: window.NewKeyState(window.Get()),
 	}
 
 	platform.setKeyMapping()
@@ -59,6 +63,7 @@ func (platform *GLFW) NewFrame() {
 	currentTime := glfw.GetTime()
 	if platform.time > 0 {
 		platform.imguiIO.SetDeltaTime(float32(currentTime - platform.time))
+		platform.DeltaTime = float32(currentTime - platform.time)
 	}
 	platform.time = currentTime
 
@@ -160,6 +165,20 @@ var glfwButtonIDByIndex = map[int]glfw.MouseButton{
 	0: glfw.MouseButton1,
 	1: glfw.MouseButton2,
 	2: glfw.MouseButton3,
+}
+
+func (platform *GLFW) SetCursorEnabled(state bool) {
+	if state == true {
+		platform.window.(*window.GlfwWindow).SetInputMode(glfw.CursorMode, glfw.CursorNormal)
+	} else {
+		platform.window.(*window.GlfwWindow).SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
+	}
+
+	platform.mouseDisabled = !state
+}
+
+func (platform *GLFW) KeyDown(x rune) bool {
+	return platform.keyState.Pressed(window.Key(x))
 }
 
 // ClipboardText returns the current clipboard text, if available.

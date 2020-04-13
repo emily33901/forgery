@@ -28,7 +28,6 @@ type Forgery struct {
 	context       *imgui.Context
 
 	ShouldQuit bool
-	DeltaTime  float32
 
 	showDemoWindow bool
 
@@ -78,7 +77,7 @@ func Get() *Forgery {
 }
 
 func (f *Forgery) NewSceneWindow() {
-	newWindow := scene.NewWindow("", f.Adapter)
+	newWindow := scene.NewWindow("", f.Adapter, f.imguiPlatform)
 
 	// Create a blue torus and add it to the scene
 	geom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
@@ -114,7 +113,7 @@ func (f *Forgery) BuildUI() {
 	}
 
 	scene.Iter(func(_ string, v *scene.Window) {
-		v.BuildUI()
+		v.BuildUI(f.imguiPlatform.DeltaTime)
 	})
 }
 

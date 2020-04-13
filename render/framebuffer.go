@@ -11,8 +11,23 @@ type FrameBuffer struct {
 
 // Resize resizes this framebuffer object
 func (win *FrameBuffer) Resize(width int, height int) {
-	win.width = width
-	win.height = height
+	// if win.width > width && win.height > height {
+	// 	// already big enough
+	// 	return
+	// }
+
+	// round the width and height up to a multiple of 2
+	if width%2 == 1 {
+		win.width = width + 1
+	} else {
+		win.width = width
+	}
+
+	if height%2 == 1 {
+		win.height = height + 1
+	} else {
+		win.height = height
+	}
 
 	win.Bind()
 
@@ -52,6 +67,10 @@ func (f *FrameBuffer) Destroy() {
 
 func (f *FrameBuffer) TextureId() uint32 {
 	return f.colorTexture
+}
+
+func (f *FrameBuffer) Size() (int, int) {
+	return f.width, f.height
 }
 
 // NewFbo returns a new framebuffer
