@@ -1,7 +1,12 @@
 package forgery
 
 import (
+	"fmt"
+
+	"github.com/emily33901/forgery/core/filesystem"
+	"github.com/emily33901/forgery/fcore"
 	imguiBackend "github.com/emily33901/forgery/imgui"
+	"github.com/emily33901/forgery/loader/keyvalues"
 	"github.com/emily33901/forgery/render"
 	"github.com/emily33901/forgery/render/adapters"
 	"github.com/emily33901/forgery/render/scene"
@@ -29,9 +34,12 @@ type Forgery struct {
 
 	ShouldQuit bool
 
-	showDemoWindow bool
+	showDemoWindow  bool
+	showAboutWindow bool
 
 	Adapter render.Adapter
+
+	fs *filesystem.Filesystem
 }
 
 var f *Forgery
@@ -43,10 +51,13 @@ func Get() *Forgery {
 	}
 
 	f = &Forgery{
-		Adapter: &adapters.OpenGL{},
-		context: imgui.CreateContext(nil),
+		Adapter:     &adapters.OpenGL{},
+		context:     imgui.CreateContext(nil),
+		IDispatcher: core.NewDispatcher(),
 	}
 	f.showDemoWindow = true
+
+	fcore.SetEvents(f.IDispatcher)
 
 	err := window.Init(1280, 720, "Forgery")
 
@@ -69,6 +80,16 @@ func Get() *Forgery {
 	f.renderer = renderer.NewRenderer(f.window.Gls())
 	err = f.renderer.AddDefaultShaders()
 
+	gameinfo, err := keyvalues.FromDisk("E:\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\" + "gameinfo.txt")
+
+	if err != nil {
+		panic(err)
+	}
+
+	f.fs = filesystem.CreateFromGameDir("E:\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\", gameinfo)
+
+	fmt.Println("Found", len(f.fs.AllPaths()), "Paths")
+
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +97,7 @@ func Get() *Forgery {
 	return f
 }
 
-func (f *Forgery) NewSceneWindow() {
+func (f *Forgery) newSceneWindow() {
 	newWindow := scene.NewWindow("", f.Adapter, f.imguiPlatform)
 
 	// Create a blue torus and add it to the scene
@@ -97,18 +118,18 @@ func (f *Forgery) NewSceneWindow() {
 	newWindow.Camera().SetPosition(0, 0, 3)
 }
 
-func (f *Forgery) BuildUI() {
+func (f *Forgery) buildUI() {
 	if f.showDemoWindow {
 		imgui.ShowDemoWindow(&f.showDemoWindow)
 	}
 
+	if f.showAboutWindow {
+		f.aboutWindow()
+	}
+
 	// Global forgery menu
 	if imgui.BeginMainMenuBar() {
-
-		if imgui.MenuItem("New scene") {
-			f.NewSceneWindow()
-		}
-
+		f.menuBar()
 		imgui.EndMainMenuBar()
 	}
 
@@ -117,7 +138,34 @@ func (f *Forgery) BuildUI() {
 	})
 }
 
-func (f *Forgery) Render() {
+func (f *Forgery) aboutWindow() {
+	imgui.BeginV("About Forgery", &f.showAboutWindow, imgui.WindowFlagsAlwaysAutoResize|imgui.WindowFlagsNoResize)
+	imgui.Text("Forgery - Open source Hammer (r) replacement.")
+	imgui.Text("Find the code at https://github.com/emily33901/forgery")
+	imgui.Text("Written by Emily Hudson.")
+	imgui.Text("Huge thanks to Galaco (https://galaco.me) for the large amounts of code that are his.")
+	imgui.End()
+}
+
+func (f *Forgery) menuBar() {
+	if imgui.MenuItem("New scene") {
+		f.newSceneWindow()
+	}
+
+	if imgui.BeginMenu("Other") {
+		if imgui.MenuItem("About") {
+			f.showAboutWindow = true
+		}
+
+		if imgui.MenuItemV("Demo window", "", f.showDemoWindow, true) {
+			f.showDemoWindow = !f.showDemoWindow
+		}
+
+		imgui.EndMenu()
+	}
+}
+
+func (f *Forgery) render() {
 	scene.Iter(func(_ string, v *scene.Window) {
 		v.Render(f.renderer)
 	})
@@ -129,12 +177,12 @@ func (f *Forgery) Run() {
 	for !f.ShouldQuit && !f.window.(*window.GlfwWindow).ShouldClose() {
 		f.imguiPlatform.ProcessEvents()
 
-		f.Render()
+		f.render()
 
 		f.imguiPlatform.NewFrame()
 		imgui.NewFrame()
 
-		f.BuildUI()
+		f.buildUI()
 		imgui.Render()
 
 		f.imguiRenderer.PreRender(clearColor)

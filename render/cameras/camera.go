@@ -1,9 +1,6 @@
 package cameras
 
 import (
-	"fmt"
-	"math"
-
 	"github.com/emily33901/forgery/fcore"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/math32"
@@ -16,8 +13,11 @@ type Camera struct {
 // Y is up
 
 func (c *Camera) Rotate(x, y, z float32) {
-	r := c.Camera.Rotation()
+	c.RotateFrom(c.Rotation(), x, y, z)
 
+}
+
+func (c *Camera) RotateFrom(r math32.Vector3, x, y, z float32) {
 	r.Y += x
 	r.X -= y
 
@@ -32,46 +32,38 @@ func (c *Camera) Rotate(x, y, z float32) {
 	c.Camera.SetRotation(r.X, r.Y, math32.DegToRad(180))
 }
 
-func (c *Camera) GetRightVector() (*math32.Vector3, *math32.Vector3) {
-	rot := c.Camera.Rotation()
+func (c *Camera) GetForwardRightVector() (forward math32.Vector3, right *math32.Vector3) {
+	forward = c.Camera.Direction()
+	up := &math32.Vector3{0, 1, 0}
 
-	f := math32.NewVector3(
-		math32.Cos(rot.Z)*math32.Sin(rot.Z),
-		math32.Cos(rot.Z)*math32.Cos(rot.Z),
-		math32.Sin(rot.Z))
+	right = forward.Clone().Cross(up)
 
-	r := math32.NewVector3(
-		(math32.Sin((rot.Y) - math.Pi/2)),
-		(math32.Cos((rot.Y) - math.Pi/2)),
-		0,
-	)
-
-	return f, r
+	return
 }
 
 func (c *Camera) Move(forward, back, left, right bool, scale float32) {
-	// camForward, _ := c.GetForwardRightVectors()
-	// p := c.Position()
-
-	var f, b float32
+	var f, b, l, r float32
 
 	if forward {
-		fmt.Println("forward")
 		f = 1 * scale
 	}
 
 	if back {
-		fmt.Println("back")
 		b = 1 * scale
 	}
-	// l := int(left)
-	// r := int(right)
 
-	d := c.Direction()
+	if left {
+		l = 1 * scale
+	}
+
+	if right {
+		r = 1 * scale
+	}
+
+	d, dr := c.GetForwardRightVector()
 
 	c.Camera.TranslateOnAxis(&d, b-f)
-
-	fmt.Println(c.Camera.Position())
+	c.Camera.TranslateOnAxis(dr, l-r)
 }
 
 var cameras *fcore.Manager = fcore.NewManager("camera-%d")

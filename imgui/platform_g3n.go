@@ -170,8 +170,11 @@ var glfwButtonIDByIndex = map[int]glfw.MouseButton{
 func (platform *GLFW) SetCursorEnabled(state bool) {
 	if state == true {
 		platform.window.(*window.GlfwWindow).SetInputMode(glfw.CursorMode, glfw.CursorNormal)
+		imgui.CurrentIO().SetConfigFlags(imgui.CurrentIO().ConfigFlags() & ^imgui.ConfigFlagNoMouse)
 	} else {
 		platform.window.(*window.GlfwWindow).SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
+		imgui.CurrentIO().SetConfigFlags(imgui.CurrentIO().ConfigFlags() | imgui.ConfigFlagNoMouse)
+
 	}
 
 	platform.mouseDisabled = !state

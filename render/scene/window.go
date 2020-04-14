@@ -24,7 +24,10 @@ type Window struct {
 	platform    fcore.Platform
 	size        imgui.Vec2
 	sizeChanged bool
-	focused     bool
+
+	focused       bool
+	dragging      bool
+	lastDragDelta imgui.Vec2
 }
 
 var windows *fcore.Manager = fcore.NewManager("scenewindow-%d")
@@ -113,13 +116,33 @@ func (w *Window) focusedControl(deltaTime float32) {
 		imgui.SetCursorScreenPos(oldCursorPos)
 	}
 
-	delta := imgui.CurrentIO().MouseDelta().Times(1).Times(deltaTime)
+	delta := imgui.CurrentIO().MouseDelta().Times(deltaTime)
 
 	//fmt.Println("Delta is", delta)
 
 	w.Camera().Rotate(delta.X, delta.Y, 0)
 
-	w.Camera().Move(w.platform.KeyDown('W'), w.platform.KeyDown('S'), false, false, 10*deltaTime)
+	w.Camera().Move(
+		w.platform.KeyDown('W'), w.platform.KeyDown('S'),
+		w.platform.KeyDown('A'), w.platform.KeyDown('D'),
+		10*deltaTime)
+}
+
+var zeroVec imgui.Vec2 = imgui.Vec2{0, 0}
+
+func (w *Window) unfocusedControl(deltaTime float32) {
+	dragDelta := imgui.MouseDragDelta(0, 10).Times(deltaTime)
+
+	if !w.dragging && dragDelta != zeroVec {
+		w.dragging = true
+		w.lastDragDelta = zeroVec
+	} else if w.dragging && dragDelta == zeroVec {
+		w.dragging = false
+	} else if w.dragging {
+		realDelta := dragDelta.Minus(w.lastDragDelta)
+		w.lastDragDelta = dragDelta
+		w.Camera().Rotate(realDelta.X, realDelta.Y, 0)
+	}
 }
 
 func (w *Window) BuildUI(deltaTime float32) {
@@ -146,7 +169,7 @@ func (w *Window) BuildUI(deltaTime float32) {
 				fmt.Println("Entered focus")
 				w.focused = true
 				w.platform.SetCursorEnabled(false)
-			} else {
+			} else if w.focused {
 				fmt.Println("Exited focus")
 				w.focused = false
 				w.platform.SetCursorEnabled(true)
@@ -155,6 +178,8 @@ func (w *Window) BuildUI(deltaTime float32) {
 
 		if w.focused {
 			w.focusedControl(deltaTime)
+		} else if imgui.IsItemHovered() || w.dragging {
+			w.unfocusedControl(deltaTime)
 		}
 
 	}
