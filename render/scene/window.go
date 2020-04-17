@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/emily33901/forgery/core/manager"
 	"github.com/emily33901/forgery/fcore"
 	"github.com/emily33901/forgery/render"
 	"github.com/emily33901/forgery/render/cameras"
@@ -30,7 +31,7 @@ type Window struct {
 	lastDragDelta imgui.Vec2
 }
 
-var windows *fcore.Manager = fcore.NewManager("scenewindow-%d")
+var windows *manager.Manager = manager.NewManager("scenewindow-%d")
 
 func oglToImguiTextureId(id uint32) imgui.TextureID {
 	return imgui.TextureID(uint64(id) | (1 << 32))

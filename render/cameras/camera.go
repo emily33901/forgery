@@ -1,7 +1,7 @@
 package cameras
 
 import (
-	"github.com/emily33901/forgery/fcore"
+	"github.com/emily33901/forgery/core/manager"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/math32"
 )
@@ -66,7 +66,7 @@ func (c *Camera) Move(forward, back, left, right bool, scale float32) {
 	c.Camera.TranslateOnAxis(dr, l-r)
 }
 
-var cameras *fcore.Manager = fcore.NewManager("camera-%d")
+var cameras *manager.Manager = manager.NewManager("camera-%d")
 
 func New() string {
 	c := &Camera{
