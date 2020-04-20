@@ -4,20 +4,17 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emily33901/forgery/core/events"
 	"github.com/emily33901/forgery/core/filesystem"
 	"github.com/emily33901/forgery/core/materials"
 	"github.com/emily33901/forgery/core/textures"
-	fcore "github.com/emily33901/forgery/forgery/core"
 	imguiBackend "github.com/emily33901/forgery/forgery/imgui"
 	"github.com/emily33901/forgery/forgery/loader/keyvalues"
 	"github.com/emily33901/forgery/forgery/render"
 	"github.com/emily33901/forgery/forgery/render/adapters"
 	"github.com/emily33901/forgery/forgery/windows"
 	"github.com/g3n/engine/core"
-	"github.com/g3n/engine/geometry"
-	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/light"
-	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
 	"github.com/g3n/engine/util/helper"
@@ -60,7 +57,7 @@ func Get() *Forgery {
 	}
 	f.showDemoWindow = true
 
-	fcore.SetEvents(f.IDispatcher)
+	events.Set(f.IDispatcher)
 
 	err := window.Init(1280, 720, "Forgery")
 
@@ -116,20 +113,16 @@ func Get() *Forgery {
 func (f *Forgery) newSceneWindow() {
 	newWindow := windows.NewSceneWindow("", f.Adapter, f.imguiPlatform)
 
-	// Create a blue torus and add it to the scene
-	geom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
-	mat := material.NewStandard(math32.NewColor("DarkBlue"))
-	mesh := graphic.NewMesh(geom, mat)
-	newWindow.Scene.Add(mesh)
+	// newWindow.Scene.Add(scenes.New())
 
 	// Create and add lights to the scene
-	newWindow.Scene.Add(light.NewAmbient(&math32.Color{1.0, 1.0, 1.0}, 0.8))
+	newWindow.Scene.Root.Add(light.NewAmbient(&math32.Color{1.0, 1.0, 1.0}, 0.8))
 	pointLight := light.NewPoint(&math32.Color{1, 1, 1}, 5.0)
 	pointLight.SetPosition(1, 0, 2)
-	newWindow.Scene.Add(pointLight)
+	newWindow.Scene.Root.Add(pointLight)
 
 	// Create and add an axis helper to the scene
-	newWindow.Scene.Add(helper.NewAxes(0.5))
+	newWindow.Scene.Root.Add(helper.NewAxes(0.5))
 
 	newWindow.Camera().SetPosition(0, 0, 3)
 }

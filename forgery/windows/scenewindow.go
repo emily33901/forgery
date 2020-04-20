@@ -5,17 +5,20 @@ import (
 	"math"
 
 	"github.com/emily33901/forgery/core/manager"
+	"github.com/emily33901/forgery/core/scenes"
 	fcore "github.com/emily33901/forgery/forgery/core"
 	"github.com/emily33901/forgery/forgery/render"
 	"github.com/emily33901/forgery/forgery/render/cameras"
 	"github.com/g3n/engine/core"
+	"github.com/g3n/engine/experimental/collision"
+	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
 	"github.com/inkyblackness/imgui-go"
 )
 
 type SceneWindow struct {
 	core.IDispatcher
-	Scene    *core.Node
+	Scene    *scenes.Scene
 	cameraId string
 	id       string
 	closing  bool
@@ -24,7 +27,11 @@ type SceneWindow struct {
 	adapter     render.Adapter
 	platform    fcore.Platform
 	size        imgui.Vec2
+	fbPos       imgui.Vec2
+	renderSize  imgui.Vec2
 	sizeChanged bool
+
+	lastMouseHitPos imgui.Vec2
 
 	focused       bool
 	dragging      bool
@@ -49,14 +56,14 @@ func NewSceneWindow(cameraId string, adapter render.Adapter, platform fcore.Plat
 	}
 
 	w := &SceneWindow{
-		Scene:    core.NewNode(),
+		Scene:    scenes.New(),
 		cameraId: cameraId,
 		fb:       render.NewFramebuffer(adapter, 200, 200),
 		adapter:  adapter,
 		platform: platform,
 	}
 
-	w.Scene.Add(cameras.Get(cameraId))
+	w.Scene.Root.Add(cameras.Get(cameraId))
 
 	w.id = sceneWindows.New(w)
 
@@ -90,7 +97,7 @@ func (w *SceneWindow) Render(r *renderer.Renderer) {
 
 	w.bind()
 	w.startFrame()
-	r.Render(w.Scene, cameras.Get(w.cameraId))
+	r.Render(w.Scene.Root, cameras.Get(w.cameraId))
 	w.endFrame()
 	w.unbind()
 }
@@ -132,17 +139,70 @@ func (w *SceneWindow) focusedControl(deltaTime float32) {
 var zeroVec imgui.Vec2 = imgui.Vec2{0, 0}
 
 func (w *SceneWindow) unfocusedControl(deltaTime float32) {
-	dragDelta := imgui.MouseDragDelta(0, 10).Times(deltaTime)
+	{
+		// Handle dragging
 
-	if !w.dragging && dragDelta != zeroVec {
-		w.dragging = true
-		w.lastDragDelta = zeroVec
-	} else if w.dragging && dragDelta == zeroVec {
-		w.dragging = false
-	} else if w.dragging {
-		realDelta := dragDelta.Minus(w.lastDragDelta)
-		w.lastDragDelta = dragDelta
-		w.Camera().Rotate(realDelta.X, realDelta.Y, 0)
+		dragDelta := imgui.MouseDragDelta(0, 10).Times(deltaTime)
+
+		if !w.dragging && dragDelta != zeroVec {
+			w.dragging = true
+			w.lastDragDelta = zeroVec
+
+			return
+		} else if w.dragging && dragDelta == zeroVec {
+			w.dragging = false
+
+			return
+		} else if w.dragging {
+			realDelta := dragDelta.Minus(w.lastDragDelta)
+			w.lastDragDelta = dragDelta
+			w.Camera().Rotate(realDelta.X, realDelta.Y, 0)
+
+			return
+		}
+	}
+
+	{
+		// Handle selecting an object
+		if imgui.IsMouseClicked(0) {
+			mouseScreenPos := imgui.MousePos()
+
+			mouseWindowPos := mouseScreenPos.Minus(w.fbPos).Minus(imgui.WindowPos())
+
+			normalisedCoords := imgui.Vec2{
+				(-.5 + mouseWindowPos.X/float32(w.size.X)) * 2.0,
+				(.5 - mouseWindowPos.Y/float32(w.size.Y)) * 2.0,
+			}
+
+			r := collision.NewRaycaster(&math32.Vector3{}, &math32.Vector3{})
+			r.SetFromCamera(w.Camera().Camera, normalisedCoords.X, normalisedCoords.Y)
+
+			results := r.IntersectObject(w.Scene.Root, true)
+
+			for _, r := range results {
+				fmt.Println("Hit object at", r.Object.Position())
+
+				if r.Object.Position() == (math32.Vector3{0, 0, 0}) {
+					r.Object.GetNode().SetPosition(0, 1, 0)
+				} else if r.Object.Position() == (math32.Vector3{0, 1, 0}) {
+					r.Object.GetNode().SetPosition(0, 0, 0)
+				}
+
+				// TODO send object-selected event
+
+			}
+			w.lastMouseHitPos = mouseWindowPos
+		}
+
+		{
+			oldCursorPos := imgui.CursorPos()
+			imgui.SetCursorPos(w.lastMouseHitPos.Plus(w.fbPos))
+			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{1, 0, 0, 1})
+			imgui.Text("+")
+			imgui.PopStyleColor()
+
+			imgui.SetCursorPos(oldCursorPos)
+		}
 	}
 }
 
@@ -156,11 +216,13 @@ func (w *SceneWindow) BuildUI(deltaTime float32) {
 			w.sizeChanged = true
 		}
 
-		fbWidth, hbHeight := w.fb.Size()
+		fbWidth, fbHeight := w.fb.Size()
+
+		w.fbPos = imgui.CursorPos()
 
 		imgui.ImageButtonV(oglToImguiTextureId(w.fb.TextureId()),
 			size, //imgui.Vec2{X: wSize.X, Y: wSize.Y},
-			imgui.Vec2{X: 0, Y: size.Y / float32(hbHeight)},
+			imgui.Vec2{X: 0, Y: size.Y / float32(fbHeight)},
 			imgui.Vec2{X: size.X / float32(fbWidth), Y: 0},
 			0,
 			imgui.Vec4{X: 0, Y: 0, Z: 0, W: 1}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
