@@ -3,6 +3,7 @@ package windows
 import (
 	"fmt"
 	"math"
+	"sort"
 
 	"github.com/emily33901/forgery/core/manager"
 	"github.com/emily33901/forgery/core/scenes"
@@ -166,7 +167,6 @@ func (w *SceneWindow) unfocusedControl(deltaTime float32) {
 		// Handle selecting an object
 		if imgui.IsMouseClicked(0) {
 			mouseScreenPos := imgui.MousePos()
-
 			mouseWindowPos := mouseScreenPos.Minus(w.fbPos).Minus(imgui.WindowPos())
 
 			normalisedCoords := imgui.Vec2{
@@ -182,12 +182,6 @@ func (w *SceneWindow) unfocusedControl(deltaTime float32) {
 			for _, r := range results {
 				fmt.Println("Hit object at", r.Object.Position())
 
-				if r.Object.Position() == (math32.Vector3{0, 0, 0}) {
-					r.Object.GetNode().SetPosition(0, 1, 0)
-				} else if r.Object.Position() == (math32.Vector3{0, 1, 0}) {
-					r.Object.GetNode().SetPosition(0, 0, 0)
-				}
-
 				// TODO send object-selected event
 
 			}
@@ -195,6 +189,7 @@ func (w *SceneWindow) unfocusedControl(deltaTime float32) {
 		}
 
 		{
+			// Draw a little debug hitmarker where we last clicked
 			oldCursorPos := imgui.CursorPos()
 			imgui.SetCursorPos(w.lastMouseHitPos.Plus(w.fbPos))
 			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{1, 0, 0, 1})
@@ -208,7 +203,7 @@ func (w *SceneWindow) unfocusedControl(deltaTime float32) {
 
 func (w *SceneWindow) BuildUI(deltaTime float32) {
 	imgui.SetNextWindowSizeConstraints(imgui.Vec2{100, 100}, imgui.Vec2{math.MaxFloat32, math.MaxFloat32})
-	if imgui.BeginV(w.id, &w.closing, imgui.WindowFlagsNoScrollbar) {
+	if imgui.BeginV(w.id, &w.closing, imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsMenuBar) {
 		size := imgui.ContentRegionAvail()
 
 		if size != w.size {
@@ -243,6 +238,35 @@ func (w *SceneWindow) BuildUI(deltaTime float32) {
 			w.focusedControl(deltaTime)
 		} else if imgui.IsItemHovered() || w.dragging {
 			w.unfocusedControl(deltaTime)
+		}
+
+		if imgui.BeginMenuBar() {
+			if imgui.BeginMenu("Camera") {
+				if imgui.BeginMenu("Cameras") {
+
+					keys := cameras.Keys()
+					sort.Strings(keys)
+
+					for _, k := range keys {
+						if imgui.MenuItemV(k, "", w.cameraId == k, true) {
+							// Item changed so find which one was used and set it
+							w.cameraId = k
+						}
+					}
+
+					imgui.EndMenu()
+				}
+
+				imgui.Separator()
+
+				if imgui.MenuItem("New camera") {
+					w.cameraId = cameras.New()
+				}
+
+				imgui.EndMenu()
+			}
+
+			imgui.EndMenuBar()
 		}
 
 	}

@@ -87,3 +87,13 @@ func Get(c string) *Camera {
 
 	return v.(*Camera)
 }
+
+func Iter(cb func(k string, v *Camera)) {
+	cameras.Iter(func(k string, v interface{}) {
+		cb(k, v.(*Camera))
+	})
+}
+
+func Keys() []string {
+	return cameras.Keys()
+}

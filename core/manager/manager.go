@@ -43,3 +43,13 @@ func (m *Manager) Iter(cb func(k string, v interface{})) {
 		cb(k, v)
 	}
 }
+
+func (m *Manager) Keys() []string {
+	ret := make([]string, 0, len(m.data))
+
+	for k := range m.data {
+		ret = append(ret, k)
+	}
+
+	return ret
+}
