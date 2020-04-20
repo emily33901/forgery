@@ -2,14 +2,17 @@ package forgery
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/emily33901/forgery/core/filesystem"
-	"github.com/emily33901/forgery/fcore"
-	imguiBackend "github.com/emily33901/forgery/imgui"
-	"github.com/emily33901/forgery/loader/keyvalues"
-	"github.com/emily33901/forgery/render"
-	"github.com/emily33901/forgery/render/adapters"
-	"github.com/emily33901/forgery/render/scene"
+	"github.com/emily33901/forgery/core/materials"
+	"github.com/emily33901/forgery/core/textures"
+	fcore "github.com/emily33901/forgery/forgery/core"
+	imguiBackend "github.com/emily33901/forgery/forgery/imgui"
+	"github.com/emily33901/forgery/forgery/loader/keyvalues"
+	"github.com/emily33901/forgery/forgery/render"
+	"github.com/emily33901/forgery/forgery/render/adapters"
+	"github.com/emily33901/forgery/forgery/windows"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
@@ -94,11 +97,24 @@ func Get() *Forgery {
 		panic(err)
 	}
 
+	for _, f := range f.fs.AllPaths() {
+		if strings.HasSuffix(f, ".vtf") && strings.Contains(f, "error") {
+			fmt.Println(f)
+		}
+	}
+
+	if false {
+		materials.Load("wow nice meme", f.fs)
+		textures.Load("wow nice meme", f.fs)
+	}
+
+	// textures.Load("wow nice meme", f.fs)
+
 	return f
 }
 
 func (f *Forgery) newSceneWindow() {
-	newWindow := scene.NewWindow("", f.Adapter, f.imguiPlatform)
+	newWindow := windows.NewSceneWindow("", f.Adapter, f.imguiPlatform)
 
 	// Create a blue torus and add it to the scene
 	geom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
@@ -133,7 +149,7 @@ func (f *Forgery) buildUI() {
 		imgui.EndMainMenuBar()
 	}
 
-	scene.Iter(func(_ string, v *scene.Window) {
+	windows.Iter(func(_ string, v *windows.SceneWindow) {
 		v.BuildUI(f.imguiPlatform.DeltaTime)
 	})
 }
@@ -166,7 +182,7 @@ func (f *Forgery) menuBar() {
 }
 
 func (f *Forgery) render() {
-	scene.Iter(func(_ string, v *scene.Window) {
+	windows.Iter(func(_ string, v *windows.SceneWindow) {
 		v.Render(f.renderer)
 	})
 }

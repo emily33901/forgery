@@ -5,6 +5,8 @@ go 1.14
 require (
 	github.com/emily33901/forgery/core/filesystem v0.0.0
 	github.com/emily33901/forgery/core/manager v0.0.0
+	github.com/emily33901/forgery/core/materials v0.0.0-20200417143503-99942b2c0535
+	github.com/emily33901/forgery/core/textures v0.0.0
 	github.com/g3n/engine v0.1.1-0.20200214161420-db7282a2ba23
 	github.com/galaco/KeyValues v1.4.1
 	github.com/galaco/bsp v0.2.2 // indirect
@@ -19,5 +21,9 @@ require (
 replace github.com/emily33901/forgery/core/filesystem => ./core/filesystem/
 
 replace github.com/emily33901/forgery/core/manager => ./core/manager/
+
+replace github.com/emily33901/forgery/core/textures => ./core/textures/
+
+replace github.com/emily33901/forgery/core/materials => ./core/materials/
 
 replace github.com/inkyblackness/imgui-go => E:\src\gohack\github.com\inkyblackness\imgui-go

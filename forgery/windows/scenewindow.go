@@ -1,19 +1,19 @@
-package scene
+package windows
 
 import (
 	"fmt"
 	"math"
 
 	"github.com/emily33901/forgery/core/manager"
-	"github.com/emily33901/forgery/fcore"
-	"github.com/emily33901/forgery/render"
-	"github.com/emily33901/forgery/render/cameras"
+	fcore "github.com/emily33901/forgery/forgery/core"
+	"github.com/emily33901/forgery/forgery/render"
+	"github.com/emily33901/forgery/forgery/render/cameras"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/renderer"
 	"github.com/inkyblackness/imgui-go"
 )
 
-type Window struct {
+type SceneWindow struct {
 	core.IDispatcher
 	Scene    *core.Node
 	cameraId string
@@ -31,24 +31,24 @@ type Window struct {
 	lastDragDelta imgui.Vec2
 }
 
-var windows *manager.Manager = manager.NewManager("scenewindow-%d")
+var sceneWindows *manager.Manager = manager.NewManager("scenewindow-%d")
 
 func oglToImguiTextureId(id uint32) imgui.TextureID {
 	return imgui.TextureID(uint64(id) | (1 << 32))
 }
 
-func Iter(cb func(k string, v *Window)) {
-	windows.Iter(func(k string, v interface{}) {
-		cb(k, v.(*Window))
+func Iter(cb func(k string, v *SceneWindow)) {
+	sceneWindows.Iter(func(k string, v interface{}) {
+		cb(k, v.(*SceneWindow))
 	})
 }
 
-func NewWindow(cameraId string, adapter render.Adapter, platform fcore.Platform) *Window {
+func NewSceneWindow(cameraId string, adapter render.Adapter, platform fcore.Platform) *SceneWindow {
 	if cameraId == "" {
 		cameraId = cameras.New()
 	}
 
-	w := &Window{
+	w := &SceneWindow{
 		Scene:    core.NewNode(),
 		cameraId: cameraId,
 		fb:       render.NewFramebuffer(adapter, 200, 200),
@@ -58,30 +58,30 @@ func NewWindow(cameraId string, adapter render.Adapter, platform fcore.Platform)
 
 	w.Scene.Add(cameras.Get(cameraId))
 
-	w.id = windows.New(w)
+	w.id = sceneWindows.New(w)
 
 	w.AttachCameraToScene()
 
 	return w
 }
 
-func (w *Window) bind() {
+func (w *SceneWindow) bind() {
 	w.fb.Bind()
 	w.adapter.Viewport(0, 0, int32(w.size.X), int32(w.size.Y))
 }
 
-func (w *Window) unbind() {
+func (w *SceneWindow) unbind() {
 	w.fb.Unbind()
 }
 
-func (w *Window) startFrame() {
+func (w *SceneWindow) startFrame() {
 	w.adapter.ClearAll()
 }
 
-func (w *Window) endFrame() {
+func (w *SceneWindow) endFrame() {
 }
 
-func (w *Window) Render(r *renderer.Renderer) {
+func (w *SceneWindow) Render(r *renderer.Renderer) {
 	if w.sizeChanged {
 		w.sizeChanged = false
 		w.Camera().SetAspect(w.size.X / w.size.Y)
@@ -95,15 +95,15 @@ func (w *Window) Render(r *renderer.Renderer) {
 	w.unbind()
 }
 
-func (w *Window) Camera() *cameras.Camera {
+func (w *SceneWindow) Camera() *cameras.Camera {
 	return cameras.Get(w.cameraId)
 }
 
-func (w *Window) AttachCameraToScene() {
+func (w *SceneWindow) AttachCameraToScene() {
 	// camera.NewOrbitControl(w.Camera())
 }
 
-func (w *Window) focusedControl(deltaTime float32) {
+func (w *SceneWindow) focusedControl(deltaTime float32) {
 	pos := imgui.WindowPos()
 	windowCentre := pos.Plus(w.size.Times(0.5))
 
@@ -131,7 +131,7 @@ func (w *Window) focusedControl(deltaTime float32) {
 
 var zeroVec imgui.Vec2 = imgui.Vec2{0, 0}
 
-func (w *Window) unfocusedControl(deltaTime float32) {
+func (w *SceneWindow) unfocusedControl(deltaTime float32) {
 	dragDelta := imgui.MouseDragDelta(0, 10).Times(deltaTime)
 
 	if !w.dragging && dragDelta != zeroVec {
@@ -146,7 +146,7 @@ func (w *Window) unfocusedControl(deltaTime float32) {
 	}
 }
 
-func (w *Window) BuildUI(deltaTime float32) {
+func (w *SceneWindow) BuildUI(deltaTime float32) {
 	imgui.SetNextWindowSizeConstraints(imgui.Vec2{100, 100}, imgui.Vec2{math.MaxFloat32, math.MaxFloat32})
 	if imgui.BeginV(w.id, &w.closing, imgui.WindowFlagsNoScrollbar) {
 		size := imgui.ContentRegionAvail()
