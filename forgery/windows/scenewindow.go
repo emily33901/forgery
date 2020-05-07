@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"github.com/emily33901/forgery/core/manager"
-	"github.com/emily33901/forgery/core/scenes"
+	"github.com/emily33901/forgery/core/world"
 	fcore "github.com/emily33901/forgery/forgery/core"
 	"github.com/emily33901/forgery/forgery/render"
 	"github.com/emily33901/forgery/forgery/render/cameras"
@@ -19,7 +19,7 @@ import (
 
 type SceneWindow struct {
 	core.IDispatcher
-	Scene    *scenes.Scene
+	Scene    *world.World
 	cameraId string
 	id       string
 	closing  bool
@@ -57,7 +57,7 @@ func NewSceneWindow(cameraId string, adapter render.Adapter, platform fcore.Plat
 	}
 
 	w := &SceneWindow{
-		Scene:    scenes.New(),
+		Scene:    world.New(),
 		cameraId: cameraId,
 		fb:       render.NewFramebuffer(adapter, 200, 200),
 		adapter:  adapter,

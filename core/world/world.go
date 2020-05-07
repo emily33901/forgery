@@ -1,4 +1,4 @@
-package scenes
+package world
 
 import (
 	"github.com/g3n/engine/core"
@@ -6,6 +6,7 @@ import (
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
+	"github.com/galaco/vmf"
 )
 
 // Scene maps a map file (vmf) and a g3n scene together
@@ -13,15 +14,21 @@ import (
 //  geometry and similar and allows for exporting back
 //  to a vmf)
 
-type Scene struct {
+type World struct {
 	Geom  *core.Node
 	Root  *core.Node
 	Debug *core.Node
+
+	// Original vmf file if it exists
+	vmfFile *vmf.Vmf
+
+	solids []Solid
+
 	// Node *core.Node
 }
 
-func New() *Scene {
-	s := &Scene{}
+func New() *World {
+	s := &World{}
 
 	s.Root = core.NewNode()
 	s.Geom = s.Root.Add(core.NewNode())

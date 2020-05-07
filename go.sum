@@ -11,6 +11,8 @@ github.com/galaco/KeyValues v1.4.1 h1:g50MJ4Ephqe1EqG8WB2S55Zye1JFnjOsHP5TwIKM7A
 github.com/galaco/KeyValues v1.4.1/go.mod h1:00r0hZpLlOBIHehyWAgUngjKPoo3vCVP25BgWLwOP7E=
 github.com/galaco/bsp v0.2.2 h1:BomFvMNrlG9AvtOLppfwoj1ToAYJukL0LEa8gRnjUxI=
 github.com/galaco/bsp v0.2.2/go.mod h1:2T3tF0vzvY0NBPrLGe0B5EEQrbG2F0Ur+HWnaSy9YA4=
+github.com/galaco/vmf v1.0.0 h1:7HiZS3TzgaBzbArBtN7BLdLW2ycc2t5MuK+9YaCDkns=
+github.com/galaco/vmf v1.0.0/go.mod h1:+hpnZQBHJ5xrERgGMr6f/KO0ZkxEkrvjqr3RI9aNHes=
 github.com/galaco/vpk2 v0.0.0-20181012095330-21e4d1f6c888 h1:QCMt6AZ5gwsJ3SNsvTULg/xjZIfmcbRWv6BBnkYNOWI=
 github.com/galaco/vpk2 v0.0.0-20181012095330-21e4d1f6c888/go.mod h1:jL22XAWuUlYUmONuamxDdbDlGJhuOFkqNRPJwuBA3X8=
 github.com/go-gl/gl v0.0.0-20190320180904-bf2b1f2f34d7 h1:SCYMcCJ89LjRGwEa0tRluNRiMjZHalQZrVrvTbPh+qw=
