@@ -1,132 +1,121 @@
 package world
 
 import (
+	"math/rand"
+	"strconv"
+
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
+	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/light"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
+	"github.com/g3n/engine/util/helper"
 	"github.com/galaco/vmf"
 )
 
-// Scene maps a map file (vmf) and a g3n scene together
-// (it technically doesnt do this but it keeps track of
-//  geometry and similar and allows for exporting back
-//  to a vmf)
-
 type World struct {
-	Geom  *core.Node
-	Root  *core.Node
-	Debug *core.Node
+	Root *core.Node
+
+	// Always keep a copy of solid and wireframe
+	// because we need to raytrace against the solid one
+	SceneSolid     *core.Node
+	SceneWireframe *core.Node
+	// Debug *core.Node
 
 	// Original vmf file if it exists
 	vmfFile *vmf.Vmf
 
-	solids []Solid
-
-	// Node *core.Node
+	solids     []Solid
+	sceneDirty bool
 }
 
-func New() *World {
-	s := &World{}
+func New(solids []Solid) *World {
+	w := &World{}
 
-	s.Root = core.NewNode()
-	s.Geom = s.Root.Add(core.NewNode())
-	s.Debug = s.Root.Add(core.NewNode())
+	w.Root = core.NewNode()
+	w.solids = solids
+	w.SceneSolid = core.NewNode()
+	w.SceneWireframe = core.NewNode()
+	w.sceneDirty = true
 
-	// geom := geometry.NewBox(10, 10, 10)
+	w.Root.Add(w.SceneSolid).Add(w.SceneWireframe)
 
-	// box := geom.BoundingBox()
-
-	// var boxSize math32.Vector3
-	// box.Size(&boxSize)
-
-	// lineMaterial := material.NewStandard(math32.NewColorHex(0xAABBCC))
-
-	// lineMaterial.SetSide(material.SideDouble)
-	// // lineMaterial.SetUseLights(material.)
-	// // lineMaterial.SetWireframe(true)
-
-	// // Get all the edges of the box
-	// pointList := []*math32.Vector3{
-	// 	// 0
-	// 	&box.Min,
-
-	// 	// 1
-	// 	box.Min.Clone().Add(&math32.Vector3{boxSize.X, 0, 0}),
-	// 	box.Min.Clone().Add(&math32.Vector3{0, boxSize.Y, 0}),
-	// 	box.Min.Clone().Add(&math32.Vector3{0, 0, boxSize.Z}),
-
-	// 	//4
-	// 	box.Min.Clone().Add(&math32.Vector3{boxSize.X, boxSize.Y, 0}),
-	// 	box.Min.Clone().Add(&math32.Vector3{0, boxSize.Y, boxSize.Z}),
-	// 	box.Min.Clone().Add(&math32.Vector3{boxSize.X, 0, boxSize.Z}),
-
-	// 	// 7
-	// 	&box.Max,
-	// }
-
-	// edgeList := [][]int{
-	// 	{0, 1},
-	// 	{0, 2},
-	// 	{0, 3},
-
-	// 	{1, 4},
-	// 	{1, 6},
-
-	// 	{2, 4},
-	// 	{2, 5},
-
-	// 	{3, 5},
-	// 	{3, 6},
-
-	// 	{4, 7},
-	// 	{5, 7},
-	// 	{6, 7},
-	// }
-
-	// // Now create the lines
-	// lines := []*graphic.Lines{}
-	// for _, e := range edgeList {
-	// 	p1 := pointList[e[0]]
-	// 	p2 := pointList[e[1]]
-
-	// 	lineGeom := NewLine(p1.DistanceTo(p2))
-
-	// 	l := graphic.NewLines(lineGeom, material.NewBasic())
-
-	// 	l.SetPositionVec(p1.Clone().Add(&math32.Vector3{-boxSize.X, -boxSize.Y, -boxSize.Z}))
-	// 	l.SetRotationVec(p1.Clone().Sub(p2).Normalize())
-
-	// 	lines = append(lines, l)
-	// }
-
-	// for _, l := range lines {
-	// 	s.Geom.Add(l)
-	// }
-
-	p := geometry.NewPlane(0, 10)
-
-	defaultMat := material.NewStandard(math32.NewColorHex(0xAABBCC))
-	defaultMat.SetWireframe(true)
-	defaultMat.SetSide(material.SideDouble)
-
-	graphic.NewLines(p, material.NewStandard(math32.NewColorHex(0xAABBCC)))
-
-	mesh := graphic.NewMesh(p, defaultMat)
-	mesh.SetPosition(0, 0, 0)
-	mesh.SetRotation(10, 10, 10)
-
-	s.Geom.Add(mesh)
-
-	return s
+	return w
 }
 
-func NewLine(length float32) (line *geometry.Geometry) {
-	if length <= 0 {
-		panic("Length <= 0")
+// BuildScene converts the internal representation into
+// a g3n scene which can be rendered
+func (w *World) BuildScene() {
+	if w.sceneDirty == false {
+		return
 	}
 
-	line = geometry.NewPlane(0, length)
-	return
+	// Cleanup the old scene
+	w.SceneSolid.DisposeChildren(true)
+	w.SceneSolid.SetName("World core")
+	w.SceneWireframe.DisposeChildren(true)
+	w.Root.Add(helper.NewAxes(1))
+
+	// Start building a new scene
+	// This essentially goes through every solid and whatnot
+	// building up nodes out of geometry
+
+	for _, s := range w.solids {
+		randomColor := &math32.Color{math32.Mod(rand.Float32(), 0.5) + 0.5, math32.Mod(rand.Float32(), 0.5) + 0.5, math32.Mod(rand.Float32(), 0.5) + 0.5}
+
+		solidNode := core.NewNode()
+		w.SceneSolid.Add(solidNode)
+
+		solidNode.SetLoaderID(strconv.Itoa(s.Id))
+
+		for _, side := range s.Sides {
+			// Get the verticies
+			verts := math32.NewArrayF32(0, 18)
+			// a plane represents 3 vertices- bottom-left, top-left and top-right
+			// Triangle 1
+
+			flipVertex := func(v *math32.Vector3) (ret *math32.Vector3) {
+				ret = v.Clone()
+				ret.Y = v.Z
+				ret.Z = v.Y
+
+				return
+			}
+
+			verts.AppendVector3(
+				flipVertex(&side.Plane[0]),
+				flipVertex(&side.Plane[1]),
+				flipVertex(&side.Plane[2]),
+
+				flipVertex(&side.Plane[0]),
+				flipVertex(&side.Plane[2]),
+
+				flipVertex(side.Plane[2].Clone().Sub(side.Plane[1].Clone().Sub(&side.Plane[0]))),
+			)
+
+			geom := geometry.NewGeometry()
+			geom.AddVBO(gls.NewVBO(verts).AddAttrib(gls.VertexPosition))
+
+			// TODO use actual material here
+			// mat := material.NewStandard(&math32.Color{s.Editor.Color.X, s.Editor.Color.Y, s.Editor.Color.Z})
+			mat := material.NewStandard(randomColor)
+			mat.SetUseLights(material.UseLightAll)
+
+			sideNode := graphic.NewMesh(geom, mat)
+			sideNode.SetLoaderID(strconv.Itoa(side.Id))
+
+			solidNode.Add(sideNode)
+
+			// TODO wireframe
+		}
+	}
+
+	l1 := light.NewAmbient(&math32.Color{1, 1, 1}, 0.5)
+
+	l1.SetPosition(0, 0, 100)
+	w.Root.Add(l1)
+
+	w.sceneDirty = false
 }

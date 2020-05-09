@@ -8,16 +8,15 @@ import (
 	"github.com/emily33901/forgery/core/filesystem"
 	"github.com/emily33901/forgery/core/materials"
 	"github.com/emily33901/forgery/core/textures"
+	"github.com/emily33901/forgery/core/vmf"
+	"github.com/emily33901/forgery/core/world"
 	imguiBackend "github.com/emily33901/forgery/forgery/imgui"
 	"github.com/emily33901/forgery/forgery/loader/keyvalues"
 	"github.com/emily33901/forgery/forgery/render"
 	"github.com/emily33901/forgery/forgery/render/adapters"
 	"github.com/emily33901/forgery/forgery/windows"
 	"github.com/g3n/engine/core"
-	"github.com/g3n/engine/light"
-	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
-	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
 	"github.com/inkyblackness/imgui-go"
 )
@@ -39,7 +38,8 @@ type Forgery struct {
 
 	Adapter render.Adapter
 
-	fs *filesystem.Filesystem
+	fs    *filesystem.Filesystem
+	world *world.World
 }
 
 var f *Forgery
@@ -105,24 +105,25 @@ func Get() *Forgery {
 		textures.Load("wow nice meme", f.fs)
 	}
 
+	vmf, err := vmf.LoadVmf("E:\\emily\\Downloads\\de_60jamey30.vmf")
+
+	if err != nil {
+		panic(err)
+	}
+
+	f.world = vmf.Worldspawn()
+
 	// textures.Load("wow nice meme", f.fs)
 
 	return f
 }
 
 func (f *Forgery) newSceneWindow() {
-	newWindow := windows.NewSceneWindow("", f.Adapter, f.imguiPlatform)
+	newWindow := windows.NewSceneWindow(f.world, "", f.Adapter, f.imguiPlatform)
 
 	// newWindow.Scene.Add(scenes.New())
 
 	// Create and add lights to the scene
-	newWindow.Scene.Root.Add(light.NewAmbient(&math32.Color{1.0, 1.0, 1.0}, 0.8))
-	pointLight := light.NewPoint(&math32.Color{1, 1, 1}, 5.0)
-	pointLight.SetPosition(1, 0, 2)
-	newWindow.Scene.Root.Add(pointLight)
-
-	// Create and add an axis helper to the scene
-	newWindow.Scene.Root.Add(helper.NewAxes(0.5))
 
 	newWindow.Camera().SetPosition(0, 0, 3)
 }

@@ -70,7 +70,7 @@ var cameras *manager.Manager = manager.NewManager("camera-%d")
 
 func New() string {
 	c := &Camera{
-		camera.New(1),
+		camera.NewPerspective(1, 0.3, 8192, 90, camera.Horizontal),
 	}
 
 	c.Camera.LookAt(&math32.Vector3{0, 0, 0}, &math32.Vector3{0, 1, 0})

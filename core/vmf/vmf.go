@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/emily33901/forgery/core/world"
+
 	"github.com/g3n/engine/math32"
 	"github.com/galaco/source-tools-common/entity"
 	"github.com/galaco/vmf"
@@ -157,7 +159,7 @@ func LoadVmf(filepath string) (*Vmf, error) {
 		return nil, err
 	}
 
-	entities := loadEntities(&importable.Entities)
+	// entities := loadEntities(&importable.Entities)
 
 	return NewVmf(versionInfo, visGroups, worldspawn,
 		// entities,
@@ -202,7 +204,7 @@ func loadVisGroups(root *vmf.Node) (*VisGroups, error) {
 
 func loadWorld(root *vmf.Node) (*world.World, error) {
 	solidNodes := root.GetChildrenByKey("solid")
-	worldSpawn := entity.FromVmfNode(root)
+	// worldSpawn := entity.FromVmfNode(root)
 
 	solids := make([]world.Solid, len(solidNodes))
 	for idx, solidNode := range solidNodes {
@@ -213,7 +215,7 @@ func loadWorld(root *vmf.Node) (*world.World, error) {
 		solids[idx] = *solid
 	}
 
-	return world.NewWorld(&worldSpawn, solids), nil
+	return world.New(solids), nil
 }
 
 func loadEditor(solidNode *vmf.Node) *world.Editor {
@@ -293,6 +295,13 @@ func loadEntities(node *vmf.Node) *entity.List {
 	return &entities
 }
 
+func NewVec3FromString(marshalled string) math32.Vector3 {
+	var x, y, z float32
+	fmt.Sscanf(marshalled, "[%f %f %f]", &x, &y, &z)
+
+	return math32.Vector3{x, y, z}
+}
+
 // loadCameras creates cameras from the vmf camera list
 func loadCameras(node *vmf.Node) (*Cameras, error) {
 	activeCamProp := node.GetProperty("activecamera")
@@ -305,7 +314,7 @@ func loadCameras(node *vmf.Node) (*Cameras, error) {
 		pos := camProp.GetProperty("position")
 		look := camProp.GetProperty("look")
 
-		cameras = append(cameras, *NewCamera(world.NewVec3FromString(pos), world.NewVec3FromString(look)))
+		cameras = append(cameras, *NewCamera(NewVec3FromString(pos), NewVec3FromString(look)))
 	}
 
 	return NewCameras(int(activeCamIdx), cameras), nil

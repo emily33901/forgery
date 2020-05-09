@@ -17,6 +17,10 @@ import (
 	"github.com/inkyblackness/imgui-go"
 )
 
+const (
+	ObjectSelected = "Window.ObjectSelected"
+)
+
 type SceneWindow struct {
 	core.IDispatcher
 	Scene    *world.World
@@ -51,13 +55,13 @@ func Iter(cb func(k string, v *SceneWindow)) {
 	})
 }
 
-func NewSceneWindow(cameraId string, adapter render.Adapter, platform fcore.Platform) *SceneWindow {
+func NewSceneWindow(world *world.World, cameraId string, adapter render.Adapter, platform fcore.Platform) *SceneWindow {
 	if cameraId == "" {
 		cameraId = cameras.New()
 	}
 
 	w := &SceneWindow{
-		Scene:    world.New(),
+		Scene:    world,
 		cameraId: cameraId,
 		fb:       render.NewFramebuffer(adapter, 200, 200),
 		adapter:  adapter,
@@ -95,6 +99,10 @@ func (w *SceneWindow) Render(r *renderer.Renderer) {
 		w.Camera().SetAspect(w.size.X / w.size.Y)
 		w.fb.Resize(int(w.size.X), int(w.size.Y))
 	}
+
+	// Make sure the scene is valid
+	// this could be done on a seperate thread
+	w.Scene.BuildScene()
 
 	w.bind()
 	w.startFrame()
@@ -134,7 +142,7 @@ func (w *SceneWindow) focusedControl(deltaTime float32) {
 	w.Camera().Move(
 		w.platform.KeyDown('W'), w.platform.KeyDown('S'),
 		w.platform.KeyDown('A'), w.platform.KeyDown('D'),
-		10*deltaTime)
+		500*deltaTime)
 }
 
 var zeroVec imgui.Vec2 = imgui.Vec2{0, 0}
@@ -180,7 +188,11 @@ func (w *SceneWindow) unfocusedControl(deltaTime float32) {
 			results := r.IntersectObject(w.Scene.Root, true)
 
 			for _, r := range results {
-				fmt.Println("Hit object at", r.Object.Position())
+				fmt.Println("Hit object with id", r.Object.GetNode().LoaderID(), "at distance", r.Distance)
+
+				if p := r.Object.GetNode().Parent(); p != nil {
+					fmt.Println("> Parent is ", p.GetNode().LoaderID())
+				}
 
 				// TODO send object-selected event
 
@@ -243,7 +255,6 @@ func (w *SceneWindow) BuildUI(deltaTime float32) {
 		if imgui.BeginMenuBar() {
 			if imgui.BeginMenu("Camera") {
 				if imgui.BeginMenu("Cameras") {
-
 					keys := cameras.Keys()
 					sort.Strings(keys)
 
@@ -261,6 +272,14 @@ func (w *SceneWindow) BuildUI(deltaTime float32) {
 
 				if imgui.MenuItem("New camera") {
 					w.cameraId = cameras.New()
+				}
+
+				imgui.EndMenu()
+			}
+
+			if imgui.BeginMenu("Debug") {
+				if imgui.MenuItem("Rebuild scene") {
+					w.Scene.BuildScene()
 				}
 
 				imgui.EndMenu()
