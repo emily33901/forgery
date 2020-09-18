@@ -36,7 +36,11 @@ type Editor struct {
 	logicalPos math32.Vector2 // only exists on brush entities?
 }
 
-type Plane [3]math32.Vector3
+type Plane struct {
+	Normal math32.Vector3
+	Dist   float32
+	Points [3]math32.Vector3
+}
 
 func NewSolid(id int, sides []Side, editor *Editor) *Solid {
 	return &Solid{
@@ -68,7 +72,17 @@ func NewEditor(color math32.Vector3, visgroupShown bool, visgroupAutoShown bool)
 }
 
 func NewPlane(a math32.Vector3, b math32.Vector3, c math32.Vector3) *Plane {
-	p := Plane([3]math32.Vector3{a, b, c})
+	x := b.Clone().Sub(&a)
+	y := c.Clone().Sub(&a)
+	normal := x.Clone().Cross(y).Normalize()
+
+	p := Plane{
+		Points: [3]math32.Vector3{a, b, c},
+		Normal: *normal,
+	}
+
+	p.Dist = p.Points[0].Dot(normal)
+
 	return &p
 }
 

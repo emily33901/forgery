@@ -6,8 +6,6 @@ import (
 
 	"github.com/emily33901/forgery/core/events"
 	"github.com/emily33901/forgery/core/filesystem"
-	"github.com/emily33901/forgery/core/materials"
-	"github.com/emily33901/forgery/core/textures"
 	"github.com/emily33901/forgery/core/vmf"
 	"github.com/emily33901/forgery/core/world"
 	imguiBackend "github.com/emily33901/forgery/forgery/imgui"
@@ -100,12 +98,7 @@ func Get() *Forgery {
 		}
 	}
 
-	if false {
-		materials.Load("wow nice meme", f.fs)
-		textures.Load("wow nice meme", f.fs)
-	}
-
-	vmf, err := vmf.LoadVmf("E:\\emily\\Downloads\\de_60jamey30.vmf")
+	vmf, err := vmf.LoadVmf("assets\\default_cs_small.vmf")
 
 	if err != nil {
 		panic(err)
@@ -113,13 +106,11 @@ func Get() *Forgery {
 
 	f.world = vmf.Worldspawn()
 
-	// textures.Load("wow nice meme", f.fs)
-
 	return f
 }
 
 func (f *Forgery) newSceneWindow() {
-	newWindow := windows.NewSceneWindow(f.world, "", f.Adapter, f.imguiPlatform)
+	newWindow := windows.NewSceneWindow(f.world, "", f.Adapter, f.imguiPlatform, f.fs)
 
 	// newWindow.Scene.Add(scenes.New())
 
@@ -184,10 +175,17 @@ func (f *Forgery) render() {
 func (f *Forgery) Run() {
 	clearColor := [3]float32{0.1, 0.1, 0.1}
 
+	i := 0
+	f.newSceneWindow()
+
 	for !f.ShouldQuit && !f.window.(*window.GlfwWindow).ShouldClose() {
+		i++
+
 		f.imguiPlatform.ProcessEvents()
 
-		f.render()
+		if i > 10 {
+			f.render()
+		}
 
 		f.imguiPlatform.NewFrame()
 		imgui.NewFrame()

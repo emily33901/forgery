@@ -6,6 +6,5 @@ import (
 
 func main() {
 	f := forgery.Get()
-
 	f.Run()
 }

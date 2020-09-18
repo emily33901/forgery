@@ -2,3 +2,4 @@ __debug_bin
 *.exe
 .vscode/
 imgui.ini
+*.vmx

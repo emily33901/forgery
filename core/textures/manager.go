@@ -11,31 +11,17 @@ import (
 const (
 	// Events
 
-	// LoadTexture tells the texture manager to load a texture by name
-	LoadTexture = "Textures.LoadTexture"
-
 	// TextureLoaded tells other systems that a texture is loaded
 	TextureLoaded = "Textures.Loaded"
 )
 
-type LoadTextureEvent struct {
-	name string
-	fs   *filesystem.Filesystem
-}
-
 type TextureLoadedEvent struct {
-	name string
-	tex  *Texture
+	Path string
+	Tex  *Texture
+	Err  error
 }
 
 var textureManager *manager.Manager = manager.NewManager("")
-
-func Init() {
-	events.Subscribe(LoadTexture, func(_ string, evData interface{}) {
-		ev := evData.(*LoadTextureEvent)
-		Load(ev.name, ev.fs)
-	})
-}
 
 func Load(path string, fs *filesystem.Filesystem) (*Texture, error) {
 	v := textureManager.Get(path)
@@ -56,12 +42,20 @@ func Load(path string, fs *filesystem.Filesystem) (*Texture, error) {
 	fmt.Println("Loading", normalPath)
 	tex, err := loadTexture(normalPath, fs)
 	if err != nil {
+		events.Dispatch(TextureLoaded, &TextureLoadedEvent{
+			path, nil, err,
+		})
+
 		return nil, err
 	}
 
 	textureManager.NewCustom(path, tex)
 	textureManager.NewCustom(normalPath, tex)
 
+	// Tell other people that we loaded it
+	events.Dispatch(TextureLoaded, &TextureLoadedEvent{
+		path, tex, nil,
+	})
 	return tex, nil
 }
 

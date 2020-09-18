@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 
+	"github.com/emily33901/forgery/core/filesystem"
 	"github.com/emily33901/forgery/core/manager"
 	"github.com/emily33901/forgery/core/world"
 	fcore "github.com/emily33901/forgery/forgery/core"
@@ -24,6 +25,7 @@ const (
 type SceneWindow struct {
 	core.IDispatcher
 	Scene    *world.World
+	Fs       *filesystem.Filesystem
 	cameraId string
 	id       string
 	closing  bool
@@ -55,7 +57,7 @@ func Iter(cb func(k string, v *SceneWindow)) {
 	})
 }
 
-func NewSceneWindow(world *world.World, cameraId string, adapter render.Adapter, platform fcore.Platform) *SceneWindow {
+func NewSceneWindow(world *world.World, cameraId string, adapter render.Adapter, platform fcore.Platform, fs *filesystem.Filesystem) *SceneWindow {
 	if cameraId == "" {
 		cameraId = cameras.New()
 	}
@@ -66,6 +68,7 @@ func NewSceneWindow(world *world.World, cameraId string, adapter render.Adapter,
 		fb:       render.NewFramebuffer(adapter, 200, 200),
 		adapter:  adapter,
 		platform: platform,
+		Fs:       fs,
 	}
 
 	w.Scene.Root.Add(cameras.Get(cameraId))
@@ -102,11 +105,14 @@ func (w *SceneWindow) Render(r *renderer.Renderer) {
 
 	// Make sure the scene is valid
 	// this could be done on a seperate thread
-	w.Scene.BuildScene()
+	w.Scene.BuildScene(w.Fs)
 
 	w.bind()
 	w.startFrame()
-	r.Render(w.Scene.Root, cameras.Get(w.cameraId))
+	err := r.Render(w.Scene.Root, cameras.Get(w.cameraId))
+	if err != nil {
+		panic(err)
+	}
 	w.endFrame()
 	w.unbind()
 }
@@ -279,7 +285,7 @@ func (w *SceneWindow) BuildUI(deltaTime float32) {
 
 			if imgui.BeginMenu("Debug") {
 				if imgui.MenuItem("Rebuild scene") {
-					w.Scene.BuildScene()
+					w.Scene.MakeDirty()
 				}
 
 				imgui.EndMenu()

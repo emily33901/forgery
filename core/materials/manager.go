@@ -62,28 +62,29 @@ func loadMaterial(path string, fs *filesystem.Filesystem) (*Material, error) {
 	}
 
 	mat := NewMaterial(path, vmtProperties.(*vmt.Properties))
-	if mat.Props.BaseTexture == "" {
+
+	vtfTexturePath = mat.Props.BaseTexture
+
+	mat.Textures.albedoPath = vtfTexturePath
+	mat.Textures.normalPath = mat.Props.Bumpmap
+
+	if vtfTexturePath == "" {
 		// Has no texture so load error texture
 		// TODO
 	}
 
-	vtfTexturePath = mat.Props.BaseTexture
 	mat.Textures.Albedo, err = textures.Load(vtfTexturePath, fs)
 
 	if err != nil {
-		// Didnt find a texture so make it the error texture
-		fmt.Println("Failed to load texture", vtfTexturePath, err)
-		// TODO
+		return nil, err
 	}
 
 	if mat.Props.Bumpmap != "" {
 		mat.Textures.Normal, err = textures.Load(mat.Props.Bumpmap, fs)
 
 		if err != nil {
-			fmt.Println("Failed to load normal texture even though there is one")
+			return nil, err
 		}
-
-		// TODO error texture?
 	}
 
 	return mat, nil
